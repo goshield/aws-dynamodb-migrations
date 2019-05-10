@@ -1,0 +1,9 @@
+ignored = ["github.com/onsi/ginkgo", "github.com/onsi/gomega"]
+
+[[constraint]]
+  name = "github.com/aws/aws-sdk-go"
+  version = "1.19.26"
+
+[prune]
+  go-tests = true
+  unused-packages = true

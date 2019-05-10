@@ -1,0 +1,61 @@
+{
+  "table": "Pet",
+  "dropIfExists": true,
+  "provisionedThroughput": {
+    "readCapacityUnits": 15,
+    "writeCapacityUnits": 10
+  },
+  "columns": [
+    {
+      "name": "id",
+      "type": "S",
+      "index": true,
+      "hash": true
+    },
+    {
+      "name": "name",
+      "type": "S"
+    },
+    {
+      "name": "type",
+      "type": "S",
+      "index": true
+    },
+    {
+      "name": "age",
+      "type": "N"
+    }
+  ],
+  "globalIndexes": [
+    {
+      "name": "gb_idx_type",
+      "provisionedThroughput": {
+        "readCapacityUnits": 5,
+        "writeCapacityUnits": 5
+      },
+      "projection": {
+        "type": "ALL"
+      },
+      "keys": [
+        {
+          "name": "type",
+          "hash": true
+        }
+      ]
+    }
+  ],
+  "items": [
+    {
+      "id": "10001",
+      "name": "Kitty",
+      "type": "cat",
+      "age": 1
+    },
+    {
+      "id": "10002",
+      "name": "Lulu",
+      "type": "dog",
+      "age": 4
+    }
+  ]
+}
