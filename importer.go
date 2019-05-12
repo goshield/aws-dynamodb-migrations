@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"reflect"
 
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 )
@@ -170,7 +171,18 @@ func (m factoryImporter) seedTable(schema *jsonSchema) (err error) {
 		for k, v := range item {
 			t, ok := schema.ColumnTypes[k]
 			if !ok {
-				return errors.New(fmt.Sprintf("%s is not a column", k))
+				switch reflect.TypeOf(v).Kind() {
+				case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+				case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+				case reflect.Float32, reflect.Float64:
+					t = dynamodb.ScalarAttributeTypeN
+					break
+				case reflect.String:
+					t = dynamodb.ScalarAttributeTypeS
+					break
+				default:
+					return errors.New(fmt.Sprintf("%s is not a proper type", k))
+				}
 			}
 			iv[k] = new(dynamodb.AttributeValue)
 			if v == nil {

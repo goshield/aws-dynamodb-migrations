@@ -20,10 +20,6 @@
       "name": "type",
       "type": "S",
       "index": true
-    },
-    {
-      "name": "age",
-      "type": "N"
     }
   ],
   "globalIndexes": [
