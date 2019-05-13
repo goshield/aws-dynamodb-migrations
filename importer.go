@@ -185,7 +185,7 @@ func (m factoryImporter) seedTable(schema *jsonSchema) (err error) {
 				}
 			}
 			iv[k] = new(dynamodb.AttributeValue)
-			if v == nil {
+			if v == nil || v == "" {
 				iv[k].SetNULL(true)
 			} else {
 				sv := fmt.Sprintf("%v", v)
