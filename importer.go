@@ -10,6 +10,10 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 )
 
+const (
+	ScalarAttributeTypeBool = "Bool"
+)
+
 type Importer interface {
 	// Migrate migrates table from file
 	Import(path string) error
@@ -43,7 +47,7 @@ func (m factoryImporter) Import(path string) (err error) {
 	actions = append(actions, m.createTable)
 	actions = append(actions, m.seedTable)
 
-	for _, action :=range actions {
+	for _, action := range actions {
 		err = action(&schema)
 		if err != nil {
 			return err
@@ -75,7 +79,7 @@ func (m factoryImporter) createTable(schema *jsonSchema) (err error) {
 	// ------------ GENERAL ---------------------- //
 	in.SetTableName(schema.Table)
 	in.SetProvisionedThroughput(&dynamodb.ProvisionedThroughput{
-		ReadCapacityUnits: &schema.ProvisionedThroughput.ReadCapacityUnits,
+		ReadCapacityUnits:  &schema.ProvisionedThroughput.ReadCapacityUnits,
 		WriteCapacityUnits: &schema.ProvisionedThroughput.WriteCapacityUnits,
 	})
 	// ------------ END GENERAL ---------------------- //
@@ -84,7 +88,7 @@ func (m factoryImporter) createTable(schema *jsonSchema) (err error) {
 	schema.ColumnTypes = make(map[string]string)
 	attributes := make([]*dynamodb.AttributeDefinition, 0)
 	keys := make([]*dynamodb.KeySchemaElement, 0)
-	for _, c :=range schema.Columns {
+	for _, c := range schema.Columns {
 		schema.ColumnTypes[c.Name] = c.Type
 		if c.Index {
 			attributes = append(attributes, c.ToAttributeDefinition())
@@ -100,7 +104,7 @@ func (m factoryImporter) createTable(schema *jsonSchema) (err error) {
 	// ------------ GLOBAL INDEXES ---------------------- //
 	if len(schema.GlobalIndexes) > 0 {
 		gbIndexes := make([]*dynamodb.GlobalSecondaryIndex, 0)
-		for _, gi :=range schema.GlobalIndexes {
+		for _, gi := range schema.GlobalIndexes {
 			if gi.Name == "" {
 				return errors.New("name of GSI must be specified")
 			}
@@ -110,7 +114,7 @@ func (m factoryImporter) createTable(schema *jsonSchema) (err error) {
 			idx := new(dynamodb.GlobalSecondaryIndex)
 			idx.SetIndexName(gi.Name)
 			idx.SetProvisionedThroughput(&dynamodb.ProvisionedThroughput{
-				ReadCapacityUnits: &gi.ProvisionedThroughput.ReadCapacityUnits,
+				ReadCapacityUnits:  &gi.ProvisionedThroughput.ReadCapacityUnits,
 				WriteCapacityUnits: &gi.ProvisionedThroughput.WriteCapacityUnits,
 			})
 			idx.Projection = new(dynamodb.Projection)
@@ -119,7 +123,7 @@ func (m factoryImporter) createTable(schema *jsonSchema) (err error) {
 				idx.Projection.SetNonKeyAttributes(gi.Projection.NonKeys)
 			}
 			keys := make([]*dynamodb.KeySchemaElement, 0)
-			for _, c :=range gi.Keys {
+			for _, c := range gi.Keys {
 				keys = append(keys, c.ToKeySchemaElement())
 			}
 			idx.SetKeySchema(keys)
@@ -132,7 +136,7 @@ func (m factoryImporter) createTable(schema *jsonSchema) (err error) {
 	// ------------ LOCAL INDEXES ---------------------- //
 	if len(schema.LocalIndexes) > 0 {
 		lcIndexes := make([]*dynamodb.LocalSecondaryIndex, 0)
-		for _, li :=range schema.GlobalIndexes {
+		for _, li := range schema.GlobalIndexes {
 			if li.Name == "" {
 				return errors.New("name of LSI must be specified")
 			}
@@ -147,7 +151,7 @@ func (m factoryImporter) createTable(schema *jsonSchema) (err error) {
 				idx.Projection.SetNonKeyAttributes(li.Projection.NonKeys)
 			}
 			keys := make([]*dynamodb.KeySchemaElement, 0)
-			for _, c :=range li.Keys {
+			for _, c := range li.Keys {
 				keys = append(keys, c.ToKeySchemaElement())
 			}
 			idx.SetKeySchema(keys)
@@ -180,6 +184,9 @@ func (m factoryImporter) seedTable(schema *jsonSchema) (err error) {
 				case reflect.String:
 					t = dynamodb.ScalarAttributeTypeS
 					break
+				case reflect.Bool:
+					t = ScalarAttributeTypeBool
+					break
 				default:
 					return errors.New(fmt.Sprintf("%s is not a proper type", k))
 				}
@@ -195,6 +202,9 @@ func (m factoryImporter) seedTable(schema *jsonSchema) (err error) {
 					break
 				case dynamodb.ScalarAttributeTypeS:
 					iv[k].SetS(sv)
+					break
+				case ScalarAttributeTypeBool:
+					iv[k].SetBOOL(v.(bool))
 					break
 				case dynamodb.ScalarAttributeTypeB:
 				default:

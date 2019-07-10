@@ -51,7 +51,8 @@
       "id": "10002",
       "name": "Lulu",
       "type": "dog",
-      "age": 4
+      "age": 4,
+      "active": true
     }
   ]
 }
