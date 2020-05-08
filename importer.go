@@ -10,15 +10,13 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 )
 
-const (
-	ScalarAttributeTypeBool = "Bool"
-)
-
+// Importer is an interface for database importer
 type Importer interface {
 	// Migrate migrates table from file
 	Import(path string) error
 }
 
+// NewImporter returns a default Importer instance
 func NewImporter(svc *dynamodb.DynamoDB) Importer {
 	return factoryImporter{svc: svc}
 }
@@ -171,46 +169,9 @@ func (m factoryImporter) seedTable(schema *jsonSchema) (err error) {
 	}
 
 	for _, item := range schema.Items {
-		iv := make(map[string]*dynamodb.AttributeValue)
-		for k, v := range item {
-			t, ok := schema.ColumnTypes[k]
-			if !ok {
-				switch reflect.TypeOf(v).Kind() {
-				case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-				case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-				case reflect.Float32, reflect.Float64:
-					t = dynamodb.ScalarAttributeTypeN
-					break
-				case reflect.String:
-					t = dynamodb.ScalarAttributeTypeS
-					break
-				case reflect.Bool:
-					t = ScalarAttributeTypeBool
-					break
-				default:
-					return errors.New(fmt.Sprintf("%s is not a proper type", k))
-				}
-			}
-			iv[k] = new(dynamodb.AttributeValue)
-			if v == nil || v == "" {
-				iv[k].SetNULL(true)
-			} else {
-				sv := fmt.Sprintf("%v", v)
-				switch t {
-				case dynamodb.ScalarAttributeTypeN:
-					iv[k].SetN(sv)
-					break
-				case dynamodb.ScalarAttributeTypeS:
-					iv[k].SetS(sv)
-					break
-				case ScalarAttributeTypeBool:
-					iv[k].SetBOOL(v.(bool))
-					break
-				case dynamodb.ScalarAttributeTypeB:
-				default:
-					return errors.New(fmt.Sprintf("%s it not supported", t))
-				}
-			}
+		iv, err := m.convertMapOfDynamoDBAttributeValue(item)
+		if err != nil {
+			return err
 		}
 		pi := new(dynamodb.PutItemInput)
 		pi.SetTableName(schema.Table)
@@ -222,4 +183,75 @@ func (m factoryImporter) seedTable(schema *jsonSchema) (err error) {
 	}
 
 	return nil
+}
+
+func (m factoryImporter) convertMapOfDynamoDBAttributeValue(item map[string]interface{}) (map[string]*dynamodb.AttributeValue, error) {
+	iv := make(map[string]*dynamodb.AttributeValue)
+	for k, v := range item {
+		vv, err := m.convertDynamoDBAttributeValue(v)
+		if err != nil {
+			return nil, err
+		}
+		iv[k] = vv
+	}
+	return iv, nil
+}
+
+func (m factoryImporter) convertListOfDynamoDBAttributeValue(items []interface{}) ([]*dynamodb.AttributeValue, error) {
+	list := make([]*dynamodb.AttributeValue, len(items))
+	for i, v := range items {
+		vv, err := m.convertDynamoDBAttributeValue(v)
+		if err != nil {
+			return nil, err
+		}
+		list[i] = vv
+	}
+
+	return list, nil
+}
+
+func (m factoryImporter) convertDynamoDBAttributeValue(v interface{}) (*dynamodb.AttributeValue, error) {
+	attr := new(dynamodb.AttributeValue)
+	if v == nil || v == "" {
+		attr.SetNULL(true)
+		return attr, nil
+	}
+	switch reflect.TypeOf(v).Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+	case reflect.Float32, reflect.Float64:
+		attr.SetN(fmt.Sprintf("%v", v))
+		break
+	case reflect.String:
+		attr.SetS(fmt.Sprintf("%v", v))
+		break
+	case reflect.Bool:
+		attr.SetBOOL(v.(bool))
+		break
+	case reflect.Slice:
+		lt, ok := v.([]interface{})
+		if !ok {
+			return nil, fmt.Errorf("Expect value is []interface{}")
+		}
+		lv, err := m.convertListOfDynamoDBAttributeValue(lt)
+		if err != nil {
+			return nil, err
+		}
+		attr.SetL(lv)
+		break
+	case reflect.Map:
+		mp, ok := v.(map[string]interface{})
+		if !ok {
+			return nil, fmt.Errorf("Expect value is map[string]interface{}")
+		}
+		mv, err := m.convertMapOfDynamoDBAttributeValue(mp)
+		if err != nil {
+			return nil, err
+		}
+		attr.SetM(mv)
+		break
+	default:
+		return nil, fmt.Errorf("(%s) is not a supporting type", reflect.TypeOf(v).Kind())
+	}
+	return attr, nil
 }

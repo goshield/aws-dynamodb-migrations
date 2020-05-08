@@ -53,6 +53,21 @@
       "type": "dog",
       "age": 4,
       "active": true
+    },
+    {
+      "id": "10003",
+      "name": "Katty",
+      "type": "dog",
+      "metadata": {
+        "age": 4,
+        "sex": "female",
+        "data": [
+          {
+            "id": "1847011d-a6cb-4182-9748-42ab7a6c268c",
+            "label": "Some Value"
+          }
+        ]
+      }
     }
   ]
 }
