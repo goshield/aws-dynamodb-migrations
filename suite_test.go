@@ -1,4 +1,4 @@
-package aws_dynamodb_migrations_test
+package migrations_test
 
 import (
 	"testing"

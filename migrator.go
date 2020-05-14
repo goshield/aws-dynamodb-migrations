@@ -1,4 +1,4 @@
-package aws_dynamodb_migrations
+package migrations
 
 import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
