@@ -2,7 +2,7 @@
 
 
 [[projects]]
-  digest = "1:82683fe28d00fb6c7b7f4fb3f699f2e88b9782b113bebb0e569a238dc11baa40"
+  digest = "1:76f7850b07f74448772611843b46f30dfddbdb6e844c1cfb62506dc243f97426"
   name = "github.com/aws/aws-sdk-go"
   packages = [
     "aws",
@@ -24,11 +24,15 @@
     "aws/request",
     "aws/session",
     "aws/signer/v4",
+    "internal/context",
     "internal/ini",
     "internal/sdkio",
+    "internal/sdkmath",
     "internal/sdkrand",
     "internal/sdkuri",
     "internal/shareddefaults",
+    "internal/strings",
+    "internal/sync/singleflight",
     "private/protocol",
     "private/protocol/json/jsonutil",
     "private/protocol/jsonrpc",
@@ -38,10 +42,19 @@
     "private/protocol/xml/xmlutil",
     "service/dynamodb",
     "service/sts",
+    "service/sts/stsiface",
   ]
   pruneopts = "UT"
-  revision = "a8ae6f5bdfb1f0d87da6aeb8611463a430dc820f"
-  version = "v1.19.27"
+  revision = "90d2b2ad332e80bcf7a1e987450f96ceb1c98ee2"
+  version = "v1.30.27"
+
+[[projects]]
+  digest = "1:7cd5b6f55e2006003f977c2975d737f9580dda4f597da137a26dd22f13498773"
+  name = "github.com/goshield/interfaces"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "057dd9613179ce1e653bcca720aa9cb115ebe3ba"
+  version = "v1.2.2"
 
 [[projects]]
   digest = "1:bb81097a5b62634f3e9fec1014657855610c82d19b9a40c17612e32651e35dca"
@@ -57,6 +70,7 @@
     "github.com/aws/aws-sdk-go/aws",
     "github.com/aws/aws-sdk-go/aws/session",
     "github.com/aws/aws-sdk-go/service/dynamodb",
+    "github.com/goshield/interfaces",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1
